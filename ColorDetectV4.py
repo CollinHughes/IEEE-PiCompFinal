@@ -108,18 +108,18 @@ def detect_color(cam):
         'P': (128, 0, 128)
     }
 
-    
+    # Function for distance between vectors
+    def distance(c1, c2):
+        return math.sqrt(sum((a - b) ** 2 for a, b in zip(c1, c2)))
+
     # Find the minimum distance between the color vector and refrence vectors
     closest_color = min(colors, key=lambda c: distance(average_color, colors[c]))
     closest_color_inc = min(colors_inc, key=lambda c: distance(average_color, colors_inc[c]))
 
     print(f"The image is closest to: {closest_color}") # Print to console
     print(f"Confidence: {closest_color_inc}") # Print to console
-    return colors
+    return closest_color
     
     
-# Function for distance between vectors
-def distance(c1, c2):
-    return math.sqrt(sum((a - b) ** 2 for a, b in zip(c1, c2)))
 
 
