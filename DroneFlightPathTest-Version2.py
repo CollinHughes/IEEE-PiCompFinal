@@ -20,30 +20,29 @@ URI = 'radio://0/80/2M'
 # Only output errors from the logging framework
 logging.basicConfig(level=logging.ERROR)
 
-max_len = 100
+measured_edge = 0.0
+vz_threshold = 0.08
+last_zest = 0.0
 
-z_est_data = deque(maxlen=max_len)
-range_data = deque(maxlen=max_len)
-vz_data = deque(maxlen=max_len)
-edge_data = deque(maxlen=max_len)
-x_data = deque(maxlen=max_len)
+launch_s = 3
+forward_s = 8 + launch_s
+home_s = 4 + forward_s
 
-counter = 0
-measured_edge = 0
-vz_threshold = 0.4
-z_threshold = 0
-last_zest = 0
+y_dist = 0.0
+x_dist = 0.0
 
 
 # -------- CALLBACK (NO PLOTTING HERE) --------
 def log_callback(timestamp, data, logconf):
-    global counter
     global measured_edge
     global last_zest
+    global x_dist
+    global y_dist
 
     z_est = data['stateEstimate.z']
+    y_dist = data['stateEstimate.y']
+    x_dist = data['stateEstimate.x']
     vz_est = data['stateEstimate.vz']
-    range_z = data['range.zrange'] / 1000.0
     
     if abs(vz_est) > vz_threshold:
         measured_edge = measured_edge + (z_est - last_zest)
@@ -55,95 +54,61 @@ def log_callback(timestamp, data, logconf):
     if measured_edge > 0.2286 and measured_edge < 0.635:
         measured_edge = 0.3048
         
-    
-    #z_est_data.append(z_est)
-    #vz_data.append(vz_est)
-    #range_data.append(range_z)
-    edge_data.append(measured_edge)
-
-    x_data.append(counter)
-    counter += 1
     last_zest = z_est
+    
 
 
 if __name__ == '__main__':
     # Initialize the low-level drivers (don't list the debug drivers)
     cflib.crtp.init_drivers(enable_debug_driver=False)
-
+    
+    launch_once = 0
+    forward_once = 0
+    home_once = 0
+    last_edge = 0.0
     with SyncCrazyflie(URI) as scf:
         # Arm the Crazyflie
-        # -------- CREATE LOG CONFIG --------
-        log_conf = LogConfig(name='ZPosition', period_in_ms=100)
-
+        # CONFIG LOG ---------------------------------------------------
+        log_conf = LogConfig(name='Creature', period_in_ms=100)
         
         log_conf.add_variable('stateEstimate.z', 'float')
+        log_conf.add_variable('stateEstimate.y', 'float')
+        log_conf.add_variable('stateEstimate.x', 'float')
         log_conf.add_variable('stateEstimate.vz', 'float')
-        log_conf.add_variable('range.zrange', 'uint16_t')
 
         scf.cf.log.add_config(log_conf)
-
-        # attach callback
         log_conf.data_received_cb.add_callback(log_callback)
-
-        # start logging
         log_conf.start()
 
-        print("Logging started. Move the drone by hand to observe values.")
-
-        # -------- PLOT SETUP --------
-        plt.ion()
-
-        fig, ax1 = plt.subplots()
-        ax2 = ax1.twinx()
-        
-        line_edge, = ax1.plot([], [], label="measured_edge")
-        #line_z, = ax1.plot([], [], label="z_est")
-        #line_range, = ax1.plot([], [], label="range")
-        #line_vz, = ax2.plot([], [], label="vz")
-
-        ax1.set_xlabel("Samples")
-        ax1.set_ylabel("Height (m)")
-        ax2.set_ylabel("Velocity (m/s)")
-
-        ax1.legend(loc="upper left")
-        ax2.legend(loc="upper right")
-
-        print("Plotting started")
-
-        while True:
-
-            if len(x_data) > 0:
-
-                line_edge.set_data(x_data, edge_data)
-                #line_z.set_data(x_data, z_est_data)
-                #line_range.set_data(x_data, range_data)
-                #line_vz.set_data(x_data, vz_data)
-
-                ax1.set_xlim(max(0, counter - max_len), counter)
-
-                ax1.relim()
-                ax1.autoscale_view()
-
-                ax2.relim()
-                ax2.autoscale_view()
-
-                plt.draw()
-                plt.pause(0.05)
-
-            time.sleep(0.05)
+        #Takeoff 
+        with PositionHlCommander(scf, controller=PositionHlCommander.CONTROLLER_PID) as pc:
+        #while True:
+            edge = measured_edge
+            last_edge = edge
             
 
-        
-        
-        # Takeoff 
-        #with PositionHlCommander(scf, controller=PositionHlCommander.CONTROLLER_PID) as pc:
-            
-            #time.sleep(1.0)
-            #scf.cf.param.set_value('motion.useFlowDisabled', '0')
+            for i in range(home_s*20): #20*seconds (3)
+                time.sleep(0.05)
+                last_edge = edge
+                edge = measured_edge
+                if i < (launch_s*20):
+                    #if (launch_once == 0) or (last_edge != edge):
+                    #    pc.go_to(0.0, 0.0, (0.6 + edge)) 
+                    launch_once = 1
+                    measured_edge = 0.0
+                    edge = 0.0
+                    last_edge = 0.0
+                elif i < (forward_s*20):
+                    if (forward_once == 0) or (last_edge != edge):
+                        pc.go_to(0.6, 0.0, (0.6 + edge))
+                        forward_once = 1
+                elif i >= (forward_s*20):
+                    if (home_once == 0) or (last_edge != edge):
+                        pc.go_to(0.0, 0.0, (0.6 + edge))
+                        home_once = 1
+                print("X/Y", edge, " ", x_dist, " ", y_dist)
+                # If the distance is too high, end the for loop
+                if (measured_edge >= 0.635) or (abs(y_dist) > 0.381) or (x_dist < -0.381) or (x_dist > 0.854):
+                    break
 
-            #time.sleep(1.0)
-            # Go to coordinate]
-            #pc.go_to(0.6, 0.0, 0.6)
-            #time.sleep(8.0)
-            #pc.go_to(0.0, 0.0, 0.6)
-            #time.sleep(3.0)
+            
