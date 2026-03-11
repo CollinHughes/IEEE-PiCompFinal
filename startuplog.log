@@ -1,1 +1,50 @@
-/home/collin/Desktop/CompPiProgram/CompStart.sh: 3: source: not found
+/usr/lib/python3/dist-packages/picamera2/previews/null_preview.py:63: DeprecationWarning: setDaemon() is deprecated, set the daemon attribute instead
+  self.thread.setDaemon(True)
+Try another input!
+The image is closest to: P
+Confidence: inconclusive
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+The image is closest to: R
+Confidence: red
+Try another input!
+Try another input!
+Try another input!
+The image is closest to: P
+Confidence: inconclusive
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+Try another input!
+ERROR:device reports readiness to read but returned no data (device disconnected or multiple access on port?)
+To fix this, look at: 
+	File: /home/collin/Desktop/CompPiProgram/main.py
+	Line: 100
+To see the full stack trace, type this terminal command:
+	 nano /tmp/tmpssryx8v5
+*************************************************
+<sys>:0: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

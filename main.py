@@ -68,7 +68,7 @@ setLow1()
 
 drone_once = 0
 
-#ser = serial.Serial('/dev/ttyACM0', baudrate=115200, timeout=1)
+ser = serial.Serial('/dev/ttyUSB0', baudrate=115200, timeout=1)
 
 
 try:
@@ -80,7 +80,7 @@ except SystemExit as e:
     GPIO.setup(led2Red, GPIO.OUT)
     cam = None
 
-readType = 'K' #K if I am reading over manual keyboard, S If I am reading serial input
+readType = 'S' #K if I am reading over manual keyboard, S If I am reading serial input
 nl = 0
 #color = ColorDetectV	4.detect_color(cam)
 
