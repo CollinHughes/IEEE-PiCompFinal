@@ -1,7 +1,9 @@
+#!/home/collin/Desktop/CompPiProgram/.venv/bin/python
 from picamzero import Camera
 import serial
 import RPi.GPIO as GPIO
 import ColorDetectV4
+import DroneFlightPath
 import sys
 import select
 
@@ -64,6 +66,8 @@ setLow3()
 setLow2()
 setLow1()
 
+drone_once = 0
+
 #ser = serial.Serial('/dev/ttyACM0', baudrate=115200, timeout=1)
 
 
@@ -73,7 +77,7 @@ try:
     camera_ok = True
 except SystemExit as e:
     print("[WARN] Prevented system exit:", e)
-    GPIO.setup(led1Red, GPIO.OUT)
+    GPIO.setup(led2Red, GPIO.OUT)
     cam = None
 
 readType = 'K' #K if I am reading over manual keyboard, S If I am reading serial input
@@ -172,6 +176,10 @@ while True:
 		setLow3()
 		setLow2()
 		setLow1()
+	elif line == 'f' and drone_once == 0:
+		drone_once = 1
+		print("calling function")
+		DroneFlightPath.fly_drone()
 	else:
 		print("Try another input!")
 		
